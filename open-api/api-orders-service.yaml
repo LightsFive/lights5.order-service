@@ -1,0 +1,160 @@
+openapi: 3.0.2
+x-stoplight:
+  id: sxkiri4ki4t72
+info:
+  title: api-orders-service
+  version: '1.0'
+  description: orders-service
+  contact:
+    name: Luffy
+    url: https://www.google.com
+    email: chityalasaikrishnareddy@gmail.com
+servers:
+  - url: 'http://localhost:3000'
+tags:
+  - name: get-order
+    description: get-orders
+paths:
+  '/v1/orders/{orderId}':
+    parameters:
+      - schema:
+          type: string
+        name: orderId
+        in: path
+        required: true
+        description: Order ID
+    get:
+      summary: Get Order Info by Order ID
+      tags:
+        - get-order
+      responses:
+        '200':
+          description: Order Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+              examples: {}
+        '404':
+          $ref: '#/components/responses/BadRequest'
+        default:
+          $ref: '#/components/responses/BadRequest'
+      operationId: get-orders-orderId
+      description: Retrieve the information of the order with the matching order ID.
+  /v1/orders:
+    post:
+      summary: Create New Order
+      operationId: post-order
+      responses:
+        '201':
+          description: Order Created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        default:
+          $ref: '#/components/responses/BadRequest'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+            examples: {}
+        description: Post the necessary fields for the API to create a new order.
+      description: Create a new order
+    parameters: []
+components:
+  schemas:
+    Cart:
+      title: Cart
+      x-stoplight:
+        id: v34jwz31t9q69
+      type: object
+      properties:
+        id:
+          type: string
+        cartItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+    CartItem:
+      title: CartItem
+      x-stoplight:
+        id: yv8wqddrae0vg
+      type: object
+      properties:
+        quantity:
+          type: integer
+        product:
+          $ref: '#/components/schemas/Product'
+    Order:
+      title: Order
+      x-stoplight:
+        id: todp504ily2vt
+      type: object
+      properties:
+        id:
+          type: string
+        cart:
+          $ref: '#/components/schemas/Cart'
+        shippingAddress:
+          $ref: '#/components/schemas/Address'
+        billingAddress:
+          $ref: '#/components/schemas/Address'
+    Address:
+      title: Address
+      x-stoplight:
+        id: n4j0lbiqey6a0
+      type: object
+      properties:
+        city:
+          type: string
+        country:
+          type: string
+        pincode:
+          type: string
+        landmark:
+          type: string
+        mobileNumber:
+          type: string
+        emailAddress:
+          type: string
+    Product:
+      title: Product
+      x-stoplight:
+        id: 9qug4sdq5pqng
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: string
+        category:
+          type: string
+    ErrorResponse:
+      title: ErrorResponse
+      x-stoplight:
+        id: pff1y4k9dcwwn
+      type: object
+      properties:
+        id:
+          type: string
+        errorResponseDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorResponseDetails'
+    ErrorResponseDetails:
+      title: ErrorResponseDetails
+      x-stoplight:
+        id: 50jszx05gre7i
+      type: object
+      properties:
+        id:
+          type: string
+  responses:
+    BadRequest:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
