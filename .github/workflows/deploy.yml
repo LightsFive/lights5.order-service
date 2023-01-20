@@ -1,0 +1,93 @@
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'env'
+        required: true
+        default: 'dev'
+      branch:
+        description: 'branch'
+        required: true
+        default: 'main'
+
+name: Deploy
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    env:
+      RUN_ID: ${{ github.run_id }}
+      environment: ${{ github.event.inputs.environment || 'dev' }}
+
+    steps:
+      - name: Install Octopus CLI
+        uses: OctopusDeploy/install-octopus-cli-action@v1.1.1
+        with:
+          version: latest
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set JAVA Version
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+
+
+      - name: JAVA Version
+        run: java -version
+
+      - name: Compile & Run Tests
+        run: mvn -B -U clean package
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push the image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
+
+        run: |
+          # Build a docker container and push it to ECR
+          mvn spring-boot:build-image
+          echo "Pushing image to ECR..."
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.environment }}-${{ env.RUN_ID }}
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.23.1'
+        id: install
+
+      - name: Set K8s Context
+        uses: azure/k8s-set-context@v2
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+          context: 'eksUser@api-kubernetes-dev.ap-south-1.eksctl.io'
+          cluster-type: 'generic'
+        id: setcontext
+
+      - name: Deploy to Kubernetes
+        uses: Azure/k8s-deploy@v4
+        with:
+          namespace: 'lights5-api'
+          manifests: k8s/resources.yml
+          images: 922228114461.dkr.ecr.ap-south-1.amazonaws.com/api-card-details:${{ env.environment }}-${{ env.RUN_ID }}
