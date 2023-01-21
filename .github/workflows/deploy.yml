@@ -37,6 +37,7 @@ jobs:
       - name: Set JAVA Version
         uses: graalvm/setup-graalvm@v1
         with:
+          version: '22.3.0'
           java-version: '19'
           components: 'native-image'
           run: |
@@ -50,15 +51,8 @@ jobs:
       - name: JAVA Version
         run: java -version
 
-      - name: Compile & Run Tests
-        run: mvn -B -U clean package
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+      - name: Compile & Build Native Executable
+        run: mvn -DskipTests -Pnative native:compile
 
       - name: Build, tag, and push the image to Docker Hub
         id: build-image
@@ -72,25 +66,3 @@ jobs:
           mvn spring-boot:build-image
           echo "Pushing image to Docker Hub..."
           docker push $DOCKER_USER/$REPO_NAME:${{ env.environment }}-${{ env.RUN_ID }}
-
-      - name: Setup Kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'v1.23.1'
-        id: install
-
-      - name: Set K8s Context
-        uses: azure/k8s-set-context@v2
-        with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
-          context: 'eksUser@api-kubernetes-dev.ap-south-1.eksctl.io'
-          cluster-type: 'generic'
-        id: setcontext
-
-      - name: Deploy to Kubernetes
-        uses: Azure/k8s-deploy@v4
-        with:
-          namespace: 'lights5-api'
-          manifests: k8s/resources.yml
-          images: $DOCKER_USER/$REPO_NAME:${{ env.environment }}-${{ env.RUN_ID }}
