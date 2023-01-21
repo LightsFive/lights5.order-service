@@ -23,6 +23,7 @@ jobs:
     env:
       RUN_ID: ${{ github.run_id }}
       environment: ${{ github.event.inputs.environment || 'dev' }}
+      REPO_NAME: 'lights5.orders-service'
 
     steps:
       - name: Install Octopus CLI
@@ -34,10 +35,16 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set JAVA Version
-        uses: actions/setup-java@v3
+        uses: graalvm/setup-graalvm@v1
         with:
-          distribution: 'corretto'
-          java-version: '17'
+          java-version: '19'
+          components: 'native-image'
+          run: |
+            echo "GRAALVM_HOME: $GRAALVM_HOME"
+            echo "JAVA_HOME: $JAVA_HOME"
+            java --version
+            gu --version
+            native-image --version
 
 
       - name: JAVA Version
@@ -53,22 +60,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Build, tag, and push the image to Amazon ECR
+      - name: Build, tag, and push the image to Docker Hub
         id: build-image
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+          DOCKER_PASSWORD: ${ secrets.DOCKER_PASSWORD }}
 
         run: |
           # Build a docker container and push it to ECR
+          docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
           mvn spring-boot:build-image
-          echo "Pushing image to ECR..."
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.environment }}-${{ env.RUN_ID }}
-          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "Pushing image to Docker Hub..."
+          docker push $DOCKER_USER/$REPO_NAME:${{ env.environment }}-${{ env.RUN_ID }}
 
       - name: Setup Kubectl
         uses: azure/setup-kubectl@v3
@@ -90,4 +93,4 @@ jobs:
         with:
           namespace: 'lights5-api'
           manifests: k8s/resources.yml
-          images: 922228114461.dkr.ecr.ap-south-1.amazonaws.com/api-card-details:${{ env.environment }}-${{ env.RUN_ID }}
+          images: $DOCKER_USER/$REPO_NAME:${{ env.environment }}-${{ env.RUN_ID }}
