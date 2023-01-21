@@ -7,13 +7,15 @@ info:
   description: orders-service
   contact:
     name: Luffy
-    url: https://www.google.com
+    url: 'https://www.google.com'
     email: chityalasaikrishnareddy@gmail.com
 servers:
   - url: 'http://localhost:3000'
 tags:
-  - name: get-order
-    description: get-orders
+  - name: OrderV1
+    description: Lists all operations related to orders
+  - name: HealthV1
+    description: Health Controller
 paths:
   '/v1/orders/{orderId}':
     parameters:
@@ -25,8 +27,6 @@ paths:
         description: Order ID
     get:
       summary: Get Order Info by Order ID
-      tags:
-        - get-order
       responses:
         '200':
           description: Order Found
@@ -41,6 +41,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
       operationId: get-orders-orderId
       description: Retrieve the information of the order with the matching order ID.
+      tags:
+        - OrderV1
   /v1/orders:
     post:
       summary: Create New Order
@@ -60,7 +62,29 @@ paths:
             examples: {}
         description: Post the necessary fields for the API to create a new order.
       description: Create a new order
+      tags:
+        - OrderV1
     parameters: []
+  /v1/health:
+    get:
+      summary: Health
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        default:
+          description: UNEXPECTED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+      operationId: get-v1-health
+      description: Returns the health of the application
+      tags:
+        - HealthV1
 components:
   schemas:
     Cart:
@@ -151,6 +175,17 @@ components:
       properties:
         id:
           type: string
+    Status:
+      title: Status
+      x-stoplight:
+        id: pe0d7am77hwqn
+      type: object
+      properties:
+        id:
+          type: string
+          enum:
+            - HEALTHY
+            - UNHEALTHY
   responses:
     BadRequest:
       description: Example response
