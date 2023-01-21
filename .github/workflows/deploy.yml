@@ -58,10 +58,10 @@ jobs:
         id: build-image
         env:
           DOCKER_USER: ${{ secrets.DOCKER_USER }}
-          DOCKER_PASSWORD: ${ secrets.DOCKER_PASSWORD }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
         run: |
-          # Build a docker container and push it to ECR
+          # Build a docker container and push it to DockerHub
           docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
           mvn spring-boot:build-image
           echo "Pushing image to Docker Hub..."
