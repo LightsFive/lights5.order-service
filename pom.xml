@@ -104,6 +104,7 @@
                     <image>
                         <name>${DOCKER_USER}/lights5.orders-service:${environment}-${RUN_ID}</name>
                     </image>
+                    <mainClass>com.lights5.orders.service.Application</mainClass>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
@@ -122,13 +123,12 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>./open-api/api-orders-service.yaml
-                            </inputSpec>
+                            <inputSpec>${project.basedir}/openapi/api-orders-service.yaml</inputSpec>
                             <generatorName>spring</generatorName>
+                            <!--<output>${project.basedir}/generated[main]</output>-->
                             <apiPackage>com.lights5.orders.service.api</apiPackage>
                             <modelPackage>com.lights5.orders.service.model</modelPackage>
-                            <supportingFilesToGenerate>ApiUtil.java
-                            </supportingFilesToGenerate>
+                            <supportingFilesToGenerate>ApiUtil.java,OpenApiGeneratorApplication.java,OpenApiGeneratorApplicationTests.java,pom.xml,README.md,RFC3339DateFormat.java,application.properties,HomeController.java,openapi.yaml,SpringDocConfiguration.java,.openapi-generator-ignore</supportingFilesToGenerate>
                             <configOptions>
                                 <delegatePattern>true</delegatePattern>
                                 <useSpringBoot3>true</useSpringBoot3>
