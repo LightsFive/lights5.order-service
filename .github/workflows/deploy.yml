@@ -63,6 +63,6 @@ jobs:
         run: |
           # Build a docker container and push it to DockerHub
           docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
-          mvn spring-boot:build-image
+          mvn spring-boot:build-image -t $REPO_NAME:${{ env.environment }}-${{ env.RUN_ID }}
           echo "Pushing image to Docker Hub..."
           docker push $DOCKER_USER/$REPO_NAME:${{ env.environment }}-${{ env.RUN_ID }}
